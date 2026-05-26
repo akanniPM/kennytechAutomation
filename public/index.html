@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FixFlow Core — Secretary Dashboard</title>
+  <!-- Modern Premium Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Elegant Styling -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  
+  <div class="app-container">
+    <!-- Premium Header -->
+    <header class="app-header">
+      <div class="logo-area">
+        <span class="logo-icon">🛠️</span>
+        <div class="logo-text">
+          <h1>FixFlow Core</h1>
+          <p>Lagos Repair Hub Console — Front Desk</p>
+        </div>
+      </div>
+      <div class="hub-status">
+        <span class="status-indicator online"></span>
+        <span class="status-text">Hub Active</span>
+      </div>
+    </header>
+
+    <!-- Operational Statistics Cards -->
+    <section class="stats-grid">
+      <div class="stat-card glass-panel">
+        <div class="stat-icon">📥</div>
+        <div class="stat-info">
+          <h3>Active Repairs</h3>
+          <p id="stat-active-count">0</p>
+        </div>
+      </div>
+      <div class="stat-card glass-panel">
+        <div class="stat-icon">📦</div>
+        <div class="stat-info">
+          <h3>Low Stock Items</h3>
+          <p id="stat-low-stock">0</p>
+        </div>
+      </div>
+      <div class="stat-card glass-panel">
+        <div class="stat-icon">₦</div>
+        <div class="stat-info">
+          <h3>Wholesale B2B Sales</h3>
+          <p id="stat-b2b-revenue">₦0</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main Workspace -->
+    <main class="workspace-grid">
+      
+      <!-- Left Column: Front Desk Client Intake Form -->
+      <section class="workspace-column glass-panel">
+        <div class="section-header">
+          <h2>📲 Device Check-In</h2>
+          <p>Register walk-in client & dispatch task</p>
+        </div>
+        
+        <form id="intake-form" class="flow-form">
+          <div class="form-group">
+            <label for="client-name">Client Name</label>
+            <input type="text" id="client-name" placeholder="e.g., Chief Bamidele" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="client-phone">Client WhatsApp Number</label>
+            <input type="tel" id="client-phone" placeholder="e.g., 08031234567" required>
+            <span class="field-hint">Enter in standard Nigerian mobile format.</span>
+          </div>
+          
+          <div class="form-group">
+            <label for="device-info">Device & Model Details</label>
+            <input type="text" id="device-info" placeholder="e.g., MacBook Air M1 (No Power)" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="assigned-tech">Assign Technician Desk</label>
+            <select id="assigned-tech" required>
+              <option value="">-- Select Engineer --</option>
+              <option value="Tunde">Tunde (Screens & Batteries)</option>
+              <option value="Alex">Alex (Micro-Soldering / Logic Boards)</option>
+            </select>
+          </div>
+          
+          <button type="submit" class="primary-btn">Initialize Ticket & Alert Tech 🚀</button>
+        </form>
+      </section>
+
+      <!-- Right Column: Active Jobs Ledger Grid -->
+      <section class="workspace-column span-two glass-panel">
+        <div class="section-header">
+          <h2>📋 Active Repair Tickets</h2>
+          <p>Complete custody handovers and inventory stock allocation below</p>
+        </div>
+        
+        <div class="table-container">
+          <table class="repairs-table">
+            <thead>
+              <tr>
+                <th>Job ID</th>
+                <th>Client</th>
+                <th>Device</th>
+                <th>Status</th>
+                <th>Desk Custody</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="repairs-tbody">
+              <!-- Dynamically populated rows -->
+              <tr>
+                <td colspan="6" class="empty-state">No active repair tickets found. Initialize check-in.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Modal A: Stock & Spare Parts Allocation -->
+  <div id="parts-modal" class="modal">
+    <div class="modal-content glass-panel">
+      <span class="close-modal" id="close-parts">&times;</span>
+      <h2>📦 Allocate Parts & Log Cost</h2>
+      <p id="parts-modal-subtitle">Job ID: #2054</p>
+      
+      <form id="parts-form" class="flow-form">
+        <input type="hidden" id="parts-job-id">
+        
+        <div class="form-group">
+          <label for="part-type">Parts Procurement Type</label>
+          <div class="radio-toggle">
+            <label class="radio-label">
+              <input type="radio" name="procure-type" value="warehouse" checked>
+              <span>Warehouse Stock</span>
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="procure-type" value="retail">
+              <span>Local Retail Shop Buy (Computer Village)</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group" id="warehouse-selection">
+          <label for="part-id">Select Warehouse Stock Part</label>
+          <select id="part-id">
+            <option value="P-101">iPhone 13 Pro Screen (₦50,000)</option>
+            <option value="P-102">MacBook M1 Audio Chip (₦12,000)</option>
+          </select>
+        </div>
+
+        <div class="form-group hidden" id="retail-fields">
+          <div class="form-group">
+            <label for="retail-source">Retail Vendor Name</label>
+            <input type="text" id="retail-source" placeholder="e.g. Alaba Electronics, Slot">
+          </div>
+          <div class="form-group">
+            <label for="retail-cost">Purchase Cost (₦)</label>
+            <input type="number" id="retail-cost" placeholder="e.g. 15000">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="part-qty">Quantity Drawn</label>
+          <input type="number" id="part-qty" value="1" min="1" required>
+        </div>
+
+        <button type="submit" class="primary-btn">Confirm Stock Deduction 💾</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal B: Chain of Custody Handover -->
+  <div id="handover-modal" class="modal">
+    <div class="modal-content glass-panel">
+      <span class="close-modal" id="close-handover">&times;</span>
+      <h2>🔀 Physical Desk Custody Handover</h2>
+      <p id="handover-modal-subtitle">Job ID: #2054</p>
+      
+      <form id="handover-form" class="flow-form">
+        <input type="hidden" id="handover-job-id">
+        
+        <div class="form-group">
+          <label for="new-tech">Transfer Physical Custody To:</label>
+          <select id="new-tech" required>
+            <option value="T-01">Tunde (Screens & Batteries)</option>
+            <option value="T-02">Alex (Micro-Soldering / Logic Boards)</option>
+          </select>
+        </div>
+
+        <button type="submit" class="primary-btn">Execute Custody Transfer 🔀</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
