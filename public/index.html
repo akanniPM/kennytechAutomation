@@ -54,76 +54,243 @@
       </div>
     </section>
 
-    <!-- Main Workspace -->
-    <main class="workspace-grid">
+    <!-- Tab Switcher Navigation -->
+    <div class="tab-nav-container">
+      <button class="tab-btn active" id="tab-btn-repairs" onclick="switchTab('repairs')">🛠️ Repairs Desk</button>
+      <button class="tab-btn" id="tab-btn-b2b" onclick="switchTab('b2b')">🛍️ B2B Wholesale Ledger</button>
+      <button class="tab-btn" id="tab-btn-ai" onclick="switchTab('ai')">🧠 AI Stock Ingest</button>
+    </div>
+
+    <!-- Workspace container holding all tabs -->
+    <div class="workspace-wrapper">
       
-      <!-- Left Column: Front Desk Client Intake Form -->
-      <section class="workspace-column glass-panel">
-        <div class="section-header">
-          <h2>📲 Device Check-In</h2>
-          <p>Register walk-in client & dispatch task</p>
-        </div>
-        
-        <form id="intake-form" class="flow-form">
-          <div class="form-group">
-            <label for="client-name">Client Name</label>
-            <input type="text" id="client-name" placeholder="e.g., Chief Bamidele" required>
-          </div>
-          
-          <div class="form-group">
-            <label for="client-phone">Client WhatsApp Number</label>
-            <input type="tel" id="client-phone" placeholder="e.g., 08031234567" required>
-            <span class="field-hint">Enter in standard Nigerian mobile format.</span>
-          </div>
-          
-          <div class="form-group">
-            <label for="device-info">Device & Model Details</label>
-            <input type="text" id="device-info" placeholder="e.g., MacBook Air M1 (No Power)" required>
-          </div>
-          
-          <div class="form-group">
-            <label for="assigned-tech">Assign Technician Desk</label>
-            <select id="assigned-tech" required>
-              <option value="">-- Select Engineer --</option>
-              <option value="Tunde">Tunde (Screens & Batteries)</option>
-              <option value="Alex">Alex (Micro-Soldering / Logic Boards)</option>
-            </select>
-          </div>
-          
-          <button type="submit" class="primary-btn">Initialize Ticket & Alert Tech 🚀</button>
-        </form>
-      </section>
+      <!-- TAB 1: REPAIRS DESK -->
+      <div id="tab-content-repairs" class="tab-content active">
+        <main class="workspace-grid">
+          <!-- Left Column: Front Desk Client Intake Form -->
+          <section class="workspace-column glass-panel">
+            <div class="section-header">
+              <h2>📲 Device Check-In</h2>
+              <p>Register walk-in client & dispatch task</p>
+            </div>
+            
+            <form id="intake-form" class="flow-form">
+              <div class="form-group">
+                <label for="client-name">Client Name</label>
+                <input type="text" id="client-name" placeholder="e.g., Chief Bamidele" required>
+              </div>
+              
+              <div class="form-group">
+                <label for="client-phone">Client WhatsApp Number</label>
+                <input type="tel" id="client-phone" placeholder="e.g., 07018844617" required>
+                <span class="field-hint">Enter in standard Nigerian mobile format.</span>
+              </div>
+              
+              <div class="form-group">
+                <label for="device-info">Device & Model Details</label>
+                <input type="text" id="device-info" placeholder="e.g., MacBook Air M1 (No Power)" required>
+              </div>
+              
+              <div class="form-group">
+                <label for="assigned-tech">Assign Technician Desk</label>
+                <select id="assigned-tech" required>
+                  <option value="">-- Select Engineer --</option>
+                  <option value="Tunde">Tunde (Screens & Batteries)</option>
+                  <option value="Alex">Alex (Micro-Soldering / Logic Boards)</option>
+                </select>
+              </div>
+              
+              <button type="submit" class="primary-btn">Initialize Ticket & Alert Tech 🚀</button>
+            </form>
+          </section>
 
-      <!-- Right Column: Active Jobs Ledger Grid -->
-      <section class="workspace-column span-two glass-panel">
-        <div class="section-header">
-          <h2>📋 Active Repair Tickets</h2>
-          <p>Complete custody handovers and inventory stock allocation below</p>
-        </div>
-        
-        <div class="table-container">
-          <table class="repairs-table">
-            <thead>
-              <tr>
-                <th>Job ID</th>
-                <th>Client</th>
-                <th>Device</th>
-                <th>Status</th>
-                <th>Desk Custody</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="repairs-tbody">
-              <!-- Dynamically populated rows -->
-              <tr>
-                <td colspan="6" class="empty-state">No active repair tickets found. Initialize check-in.</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
+          <!-- Right Column: Active Jobs Ledger Grid -->
+          <section class="workspace-column span-two glass-panel">
+            <div class="section-header">
+              <h2>📋 Active Repair Tickets</h2>
+              <p>Complete custody handovers and inventory stock allocation below</p>
+            </div>
+            
+            <div class="table-container">
+              <table class="repairs-table">
+                <thead>
+                  <tr>
+                    <th>Job ID</th>
+                    <th>Client</th>
+                    <th>Device</th>
+                    <th>Status</th>
+                    <th>Desk Custody</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="repairs-tbody">
+                  <!-- Dynamically populated rows -->
+                  <tr>
+                    <td colspan="6" class="empty-state">No active repair tickets found. Initialize check-in.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </main>
+      </div>
 
-    </main>
+      <!-- TAB 2: B2B WHOLESALE LEDGER -->
+      <div id="tab-content-b2b" class="tab-content">
+        <main class="workspace-grid">
+          <!-- Left Column: Log B2B Sale Form -->
+          <section class="workspace-column glass-panel">
+            <div class="section-header">
+              <h2>🛍️ Wholesale Sale Log</h2>
+              <p>Log B2B tools or spares sold to external hubs</p>
+            </div>
+            
+            <form id="b2b-form" class="flow-form">
+              <div class="form-group">
+                <label for="b2b-buyer-name">Buyer Hub Name</label>
+                <input type="text" id="b2b-buyer-name" placeholder="e.g., Ikeja Spares Plaza" required>
+              </div>
+              
+              <div class="form-group">
+                <label for="b2b-buyer-phone">Buyer Contact Number</label>
+                <input type="tel" id="b2b-buyer-phone" placeholder="e.g., 08039876543" required>
+              </div>
+              
+              <div class="form-group">
+                <label for="b2b-part-id">Select Wholesale Item</label>
+                <select id="b2b-part-id" required>
+                  <option value="">-- Select Inventory Part --</option>
+                  <option value="a1111111-1111-4111-b111-111111111111">iPhone 13 Pro Screen (₦50,000)</option>
+                  <option value="a2222222-2222-4222-b222-222222222222">MacBook M1 Audio Chip (₦12,000)</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="b2b-qty">Quantity Sold</label>
+                <input type="number" id="b2b-qty" value="1" min="1" required>
+              </div>
+
+              <div class="form-group">
+                <label for="b2b-price">Price Charged per Unit (₦)</label>
+                <input type="number" id="b2b-price" placeholder="e.g., 48000" required>
+                <span class="field-hint">Enter the wholesale unit price.</span>
+              </div>
+
+              <div class="form-group">
+                <label for="b2b-payment">Payment Status</label>
+                <select id="b2b-payment" required>
+                  <option value="Pending">Pending (Bank Transfer Pending)</option>
+                  <option value="Paid">Paid (Cash/Transfer Received)</option>
+                </select>
+              </div>
+              
+              <button type="submit" class="primary-btn">Record Wholesale Transaction 💾</button>
+            </form>
+          </section>
+
+          <!-- Right Column: B2B Wholesale Ledger Grid -->
+          <section class="workspace-column span-two glass-panel">
+            <div class="section-header">
+              <h2>📋 Wholesale Sales Ledger</h2>
+              <p>Active bulk spares trade records and stock deduction logs</p>
+            </div>
+            
+            <div class="table-container">
+              <table class="repairs-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Buyer Hub</th>
+                    <th>Contact</th>
+                    <th>Part Sold</th>
+                    <th>Qty</th>
+                    <th>Revenue (₦)</th>
+                    <th>Payment</th>
+                  </tr>
+                </thead>
+                <tbody id="b2b-tbody">
+                  <tr>
+                    <td colspan="7" class="empty-state">No wholesale transactions logged today.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </main>
+      </div>
+
+      <!-- TAB 3: AI STOCK INTAKE -->
+      <div id="tab-content-ai" class="tab-content">
+        <main class="workspace-grid">
+          <!-- Left Column: Upload Supplier Invoice -->
+          <section class="workspace-column glass-panel">
+            <div class="section-header">
+              <h2>🧠 AI Supplier Restock Ingest</h2>
+              <p>Upload distributor invoice for automated OCR data restock</p>
+            </div>
+            
+            <div class="flow-form">
+              <div class="form-group">
+                <label>Drag & Drop or Select Distributor Invoice</label>
+                <div class="upload-zone" id="upload-zone" onclick="triggerFileInput()">
+                  <div class="upload-icon">📄</div>
+                  <p class="upload-text">Click to choose image or PDF invoice</p>
+                  <span class="field-hint">Supports JPG, PNG, PDF supplier invoices</span>
+                  <input type="file" id="invoice-file" style="display: none;" onchange="handleFileSelect(event)">
+                </div>
+                <div class="file-info hidden" id="file-info">
+                  <span id="selected-filename">invoice_01.pdf</span>
+                  <button class="small-btn error" onclick="resetFileSelector()">Remove ❌</button>
+                </div>
+              </div>
+              
+              <button id="btn-parse-invoice" class="primary-btn" onclick="parseInvoiceWithAI()">Scan & Parse Invoice with Gemini Vision AI 🧠</button>
+            </div>
+          </section>
+
+          <!-- Right Column: AI Extraction Preview & Restock Action -->
+          <section class="workspace-column span-two glass-panel">
+            <div class="section-header">
+              <h2>🔍 Extracted Invoice Details & Preview</h2>
+              <p>Confirm the AI-extracted invoice line items below before committing to the catalog</p>
+            </div>
+            
+            <div class="ai-preview-empty" id="ai-preview-empty">
+              <div class="empty-icon">🧠</div>
+              <p>Upload and scan a supplier invoice to see dynamic AI-extracted inventory items here.</p>
+            </div>
+
+            <div class="ai-preview-active hidden" id="ai-preview-active">
+              <div class="invoice-summary-card">
+                <div class="summary-line"><strong>Distributor:</strong> <span id="ai-supplier">Shenzhen Electronics Ltd</span></div>
+                <div class="summary-line"><strong>Invoice No:</strong> <span id="ai-invoice-no">INV-2026-9811</span></div>
+                <div class="summary-line"><strong>Total Cost:</strong> <span id="ai-total-cost" style="color: var(--primary-accent); font-weight: 700;">₦289,000</span></div>
+              </div>
+
+              <div class="table-container" style="margin: 1.5rem 0;">
+                <table class="repairs-table">
+                  <thead>
+                    <tr>
+                      <th>Part Name</th>
+                      <th>Quantity</th>
+                      <th>Unit Cost (₦)</th>
+                      <th>Selling Price (₦)</th>
+                      <th>Alert Limit</th>
+                    </tr>
+                  </thead>
+                  <tbody id="ai-items-tbody">
+                    <!-- Extracted rows loaded here -->
+                  </tbody>
+                </table>
+              </div>
+
+              <button class="primary-btn" style="width: 100%;" onclick="commitAIRestock()">Automate Database Restock & Recalculate Margins 💾</button>
+            </div>
+          </section>
+        </main>
+      </div>
+
+    </div>
   </div>
 
   <!-- Modal A: Stock & Spare Parts Allocation -->
@@ -153,8 +320,8 @@
         <div class="form-group" id="warehouse-selection">
           <label for="part-id">Select Warehouse Stock Part</label>
           <select id="part-id">
-            <option value="P-101">iPhone 13 Pro Screen (₦50,000)</option>
-            <option value="P-102">MacBook M1 Audio Chip (₦12,000)</option>
+            <option value="a1111111-1111-4111-b111-111111111111">iPhone 13 Pro Screen (₦50,000)</option>
+            <option value="a2222222-2222-4222-b222-222222222222">MacBook M1 Audio Chip (₦12,000)</option>
           </select>
         </div>
 
@@ -192,8 +359,8 @@
         <div class="form-group">
           <label for="new-tech">Transfer Physical Custody To:</label>
           <select id="new-tech" required>
-            <option value="T-01">Tunde (Screens & Batteries)</option>
-            <option value="T-02">Alex (Micro-Soldering / Logic Boards)</option>
+            <option value="11111111-1111-4111-b111-111111111111">Tunde (Screens & Batteries)</option>
+            <option value="22222222-2222-4222-b222-222222222222">Alex (Micro-Soldering / Logic Boards)</option>
           </select>
         </div>
 

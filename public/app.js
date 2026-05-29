@@ -43,7 +43,7 @@ intakeForm.addEventListener('submit', async (e) => {
   const techName = techSelect.value;
   
   // Simulated technician IDs (for Postgres schema matches)
-  const techId = techName === 'Tunde' ? 'T-01' : 'T-02';
+  const techId = techName === 'Tunde' ? '11111111-1111-4111-b111-111111111111' : '22222222-2222-4222-b222-222222222222';
 
   const payload = {
     client_name: clientName,
@@ -161,7 +161,7 @@ document.getElementById('parts-form').addEventListener('submit', async (e) => {
   if (isRetail) {
     payload.retail_source = document.getElementById('retail-source').value || 'Computer Village Vendor';
     payload.purchase_cost = parseFloat(document.getElementById('retail-cost').value) || 0;
-    payload.part_id = 'SPECIAL'; // Special retail key
+    payload.part_id = 'eeeeeeee-eeee-4eee-beee-eeeeeeeeeeee'; // Special retail key
   } else {
     payload.part_id = document.getElementById('part-id').value;
   }
@@ -248,3 +248,233 @@ document.getElementById('handover-form').addEventListener('submit', async (e) =>
     alert(`Testing Mode: Transfer complete. Handover logged to custody timeline.`);
   }
 });
+
+// ==================================================
+// 4. Tab Navigation Switcher Logic
+// ==================================================
+window.switchTab = function(tabName) {
+  // Remove active class from all buttons and contents
+  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+  
+  // Add active class to target tab button and sheet
+  document.getElementById(`tab-btn-${tabName}`).classList.add('active');
+  document.getElementById(`tab-content-${tabName}`).classList.add('active');
+};
+
+// ==================================================
+// 5. B2B Wholesale Ledger Logic
+// ==================================================
+let b2bSales = [];
+let totalB2BRevenue = 0;
+
+document.getElementById('b2b-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  
+  const buyerName = document.getElementById('b2b-buyer-name').value.trim();
+  const buyerPhone = document.getElementById('b2b-buyer-phone').value.trim();
+  const partSelect = document.getElementById('b2b-part-id');
+  const partId = partSelect.value;
+  const partName = partSelect.options[partSelect.selectedIndex].text.split(' (')[0];
+  const qty = parseInt(document.getElementById('b2b-qty').value, 10);
+  const price = parseFloat(document.getElementById('b2b-price').value) || 0;
+  const paymentStatus = document.getElementById('b2b-payment').value;
+
+  const payload = {
+    buyer_hub_name: buyerName,
+    buyer_phone: buyerPhone,
+    part_id: partId,
+    qty: qty,
+    price_charged: price,
+    payment_status: paymentStatus
+  };
+
+  try {
+    const response = await fetch('/api/b2b-sale', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      alert(`Success! Wholesale B2B transaction logged. Stock levels updated.`);
+      
+      const newSale = {
+        date: new Date().toLocaleDateString(),
+        buyer: buyerName,
+        phone: buyerPhone,
+        part: partName,
+        qty: qty,
+        revenue: price * qty,
+        payment: paymentStatus
+      };
+      
+      b2bSales.unshift(newSale);
+      totalB2BRevenue += price * qty;
+      
+      renderB2BTable();
+      document.getElementById('b2b-form').reset();
+    } else {
+      alert(`B2B Transaction Error: ${result.error}`);
+    }
+  } catch (error) {
+    console.error('API Error connecting to /api/b2b-sale:', error);
+    
+    // Testing Mode local fallback
+    const fallbackSale = {
+      date: new Date().toLocaleDateString(),
+      buyer: buyerName,
+      phone: buyerPhone,
+      part: partName,
+      qty: qty,
+      revenue: price * qty,
+      payment: paymentStatus
+    };
+    
+    b2bSales.unshift(fallbackSale);
+    totalB2BRevenue += price * qty;
+    
+    renderB2BTable();
+    document.getElementById('b2b-form').reset();
+    alert(`Testing Mode: Simulating wholesale transaction locally. Stock decremented.`);
+  }
+});
+
+function renderB2BTable() {
+  const b2bTbody = document.getElementById('b2b-tbody');
+  document.getElementById('stat-b2b-revenue').textContent = `₦${totalB2BRevenue.toLocaleString()}`;
+
+  if (b2bSales.length === 0) {
+    b2bTbody.innerHTML = `
+      <tr>
+        <td colspan="7" class="empty-state">No wholesale transactions logged today.</td>
+      </tr>
+    `;
+    return;
+  }
+
+  b2bTbody.innerHTML = b2bSales.map(sale => `
+    <tr>
+      <td>${sale.date}</td>
+      <td><strong>${sale.buyer}</strong></td>
+      <td><code>${sale.phone}</code></td>
+      <td>${sale.part}</td>
+      <td><code>${sale.qty}</code></td>
+      <td><span style="color: var(--primary-accent); font-weight:600;">₦${sale.revenue.toLocaleString()}</span></td>
+      <td><span class="badge ${sale.payment.toLowerCase() === 'paid' ? 'ready' : 'assigned'}">${sale.payment}</span></td>
+    </tr>
+  `).join('');
+}
+
+// ==================================================
+// 6. AI Supplier Stock Ingest Logic
+// ==================================================
+let aiParsedInvoice = null;
+
+window.triggerFileInput = function() {
+  document.getElementById('invoice-file').click();
+};
+
+window.handleFileSelect = function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  document.getElementById('selected-filename').textContent = file.name;
+  document.getElementById('upload-zone').classList.add('hidden');
+  document.getElementById('file-info').classList.remove('hidden');
+};
+
+window.resetFileSelector = function() {
+  document.getElementById('invoice-file').value = '';
+  document.getElementById('upload-zone').classList.remove('hidden');
+  document.getElementById('file-info').classList.add('hidden');
+  document.getElementById('ai-preview-active').classList.add('hidden');
+  document.getElementById('ai-preview-empty').classList.remove('hidden');
+  aiParsedInvoice = null;
+};
+
+window.parseInvoiceWithAI = function() {
+  const btn = document.getElementById('btn-parse-invoice');
+  const filename = document.getElementById('selected-filename').textContent;
+  
+  btn.textContent = "AI Scanning Invoice Ledger... 🧠";
+  btn.disabled = true;
+
+  // Emulate beautiful scan timing delay
+  setTimeout(() => {
+    btn.textContent = "Scan & Parse Invoice with Gemini Vision AI 🧠";
+    btn.disabled = false;
+
+    // High fidelity data parsed from mockup distributor invoice
+    aiParsedInvoice = {
+      supplier_name: "Shenzhen Electronics Ltd",
+      invoice_number: "INV-2026-9811",
+      total_cost: 255000.00,
+      restock_items: [
+        {
+          part_name: "iPhone 13 Pro Screen",
+          qty: 5,
+          unit_cost: 35000.00,
+          selling_price: 50000.00,
+          threshold_alert: 3
+        },
+        {
+          part_name: "MacBook M1 Audio Chip",
+          qty: 10,
+          unit_cost: 8000.00,
+          selling_price: 12000.00,
+          threshold_alert: 2
+        }
+      ]
+    };
+
+    // Load dynamic summary details
+    document.getElementById('ai-supplier').textContent = aiParsedInvoice.supplier_name;
+    document.getElementById('ai-invoice-no').textContent = aiParsedInvoice.invoice_number;
+    document.getElementById('ai-total-cost').textContent = `₦${aiParsedInvoice.total_cost.toLocaleString()}`;
+
+    // Render parsed invoice items into preview grid
+    const tbody = document.getElementById('ai-items-tbody');
+    tbody.innerHTML = aiParsedInvoice.restock_items.map(item => `
+      <tr>
+        <td><strong>${item.part_name}</strong></td>
+        <td><code>+${item.qty} units</code></td>
+        <td>₦${item.unit_cost.toLocaleString()}</td>
+        <td>₦${item.selling_price.toLocaleString()}</td>
+        <td><code>${item.threshold_alert}</code></td>
+      </tr>
+    `).join('');
+
+    // Toggle panels
+    document.getElementById('ai-preview-empty').classList.add('hidden');
+    document.getElementById('ai-preview-active').classList.remove('hidden');
+  }, 1500);
+};
+
+window.commitAIRestock = async function() {
+  if (!aiParsedInvoice) return;
+
+  try {
+    const response = await fetch('/api/restock', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(aiParsedInvoice)
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      alert(`Success! Database stock catalog updated. Extracted receipt logged.`);
+      resetFileSelector();
+    } else {
+      alert(`Restock Error: ${result.error}`);
+    }
+  } catch (error) {
+    console.error('API Error connecting to /api/restock:', error);
+    resetFileSelector();
+    alert(`Testing Mode: Simulated database restock completed. Inventory refreshed.`);
+  }
+};
+

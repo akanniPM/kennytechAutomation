@@ -20,17 +20,18 @@ module.exports = async (req, res) => {
   const {
     buyer_hub_name,
     buyer_phone,
-    part_id,
+    part_name,       // Name of the part being sold e.g. "Samsung S21 Battery"
+    part_id,         // Optional UUID — use this if you already have it; otherwise part_name is used to look it up
     qty,
     price_charged,
     payment_status
   } = req.body;
 
-  // Validation
-  if (!buyer_hub_name || !buyer_phone || !part_id || !price_charged) {
+  // Validation — need buyer info, at least one part identifier, and a price
+  if (!buyer_hub_name || !buyer_phone || (!part_name && !part_id) || !price_charged) {
     return res.status(400).json({
       success: false,
-      error: 'Missing required parameters: buyer_hub_name, buyer_phone, part_id, and price_charged are mandatory.'
+      error: 'Missing required parameters: buyer_hub_name, buyer_phone, price_charged, and either part_name or part_id are mandatory.'
     });
   }
 
@@ -39,10 +40,27 @@ module.exports = async (req, res) => {
   const status = payment_status || 'Pending';
 
   try {
+    // 0. Resolve part_id from part_name if not provided directly
+    let resolvedPartId = part_id || null;
+
+    if (!resolvedPartId) {
+      const nameResult = await db.query(
+        'SELECT part_id FROM inventory WHERE LOWER(part_name) = LOWER($1)',
+        [part_name.trim()]
+      );
+      if (nameResult.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          error: `Part "${part_name}" not found in inventory catalog. Check the name or add it via restock first.`
+        });
+      }
+      resolvedPartId = nameResult.rows[0].part_id;
+    }
+
     // 1. Verify stock availability first
     const stockResult = await db.query(
       'SELECT qty_in_stock, part_name FROM inventory WHERE part_id = $1',
-      [part_id]
+      [resolvedPartId]
     );
 
     if (stockResult.rows.length === 0) {
@@ -68,7 +86,7 @@ module.exports = async (req, res) => {
     const saleValues = [
       buyer_hub_name,
       buyer_phone,
-      part_id,
+      resolvedPartId,
       quantity,
       price,
       status

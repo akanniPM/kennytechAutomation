@@ -19,19 +19,20 @@ module.exports = async (req, res) => {
 
   const {
     job_id,
-    part_id,
-    qty,
-    allocated_to,
-    is_retail_purchase,
-    retail_source,
-    purchase_cost
+    part_name,       // Name of the part e.g. "iPhone 13 Screen" — looked up from inventory catalog
+    part_id,         // Optional UUID fallback if you already know the part_id
+    qty,             // How many units to allocate (defaults to 1)
+    allocated_to,    // UUID of the technician receiving/using this part
+    is_retail_purchase, // true = part was bought on-the-spot from a local store (not from warehouse stock)
+    retail_source,   // Name of the local store where part was purchased (only used if is_retail_purchase = true)
+    purchase_cost    // Cost paid for the part at retail (only used if is_retail_purchase = true)
   } = req.body;
 
-  // Basic validation
-  if (!job_id || !part_id) {
+  // Basic validation — need at least one identifier and the job
+  if (!job_id || (!part_name && !part_id)) {
     return res.status(400).json({
       success: false,
-      error: 'Missing parameters: job_id and part_id are mandatory.'
+      error: 'Missing parameters: job_id and either part_name or part_id are mandatory.'
     });
   }
 
@@ -40,11 +41,28 @@ module.exports = async (req, res) => {
   const cost = parseFloat(purchase_cost) || 0.00;
 
   try {
+    // 0. Resolve part_id from part_name if part_id was not supplied directly
+    let resolvedPartId = part_id || null;
+
+    if (!resolvedPartId) {
+      const nameResult = await db.query(
+        'SELECT part_id FROM inventory WHERE LOWER(part_name) = LOWER($1)',
+        [part_name.trim()]
+      );
+      if (nameResult.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          error: `Part "${part_name}" not found in inventory catalog. Check the name or add it via restock first.`
+        });
+      }
+      resolvedPartId = nameResult.rows[0].part_id;
+    }
+
     // 1. If it's a warehouse part (not retail purchase), verify that we have enough stock first
     if (!isRetail) {
       const stockResult = await db.query(
         'SELECT qty_in_stock, part_name FROM inventory WHERE part_id = $1',
-        [part_id]
+        [resolvedPartId]
       );
 
       if (stockResult.rows.length === 0) {
@@ -70,7 +88,7 @@ module.exports = async (req, res) => {
 
     const logValues = [
       job_id,
-      part_id,
+      resolvedPartId,
       quantity,
       allocated_to || null,
       isRetail,

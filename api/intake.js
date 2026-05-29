@@ -19,7 +19,7 @@ module.exports = async (req, res) => {
     return res.status(405).json({ success: false, error: 'Method Not Allowed. Use POST.' });
   }
 
-  const { client_name, client_phone, device_info, assigned_tech_id } = req.body;
+  const { client_name, client_phone, device_info, assigned_tech_id, service_charge, service_charge_note } = req.body;
 
   // Basic validation
   if (!client_name || !client_phone || !device_info) {
@@ -29,14 +29,30 @@ module.exports = async (req, res) => {
     });
   }
 
+  // Build initial service_charges array.
+  // Each entry: { amount, note, added_at }
+  // More entries can be appended as diagnostics progress via a separate update.
+  const initialCharges = [];
+  if (service_charge) {
+    const chargeAmount = parseFloat(service_charge);
+    if (isNaN(chargeAmount) || chargeAmount < 0) {
+      return res.status(400).json({ success: false, error: 'Invalid service_charge value. Must be a positive number.' });
+    }
+    initialCharges.push({
+      amount: chargeAmount,
+      note: service_charge_note || 'Initial service charge',
+      added_at: new Date().toISOString()
+    });
+  }
+
   try {
     const queryText = `
-      INSERT INTO repairs (client_name, client_phone, device_info, primary_tech_id, current_tech_id, status)
-      VALUES ($1, $2, $3, $4, $4, 'Intake')
-      RETURNING job_id, client_name, client_phone, device_info, status, checked_in_at;
+      INSERT INTO repairs (client_name, client_phone, device_info, primary_tech_id, current_tech_id, status, service_charges)
+      VALUES ($1, $2, $3, $4, $4, 'Intake', $5)
+      RETURNING job_id, client_name, client_phone, device_info, status, service_charges, checked_in_at;
     `;
 
-    const values = [client_name, client_phone, device_info, assigned_tech_id || null];
+    const values = [client_name, client_phone, device_info, assigned_tech_id || null, JSON.stringify(initialCharges)];
     const result = await db.query(queryText, values);
 
     const newTicket = result.rows[0];

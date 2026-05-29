@@ -4,11 +4,12 @@
   "description": "Vercel Serverless Backend for FixFlow Core Repair Hub Automation",
   "main": "api/intake.js",
   "scripts": {
-    "dev": "vercel dev",
+    "dev": "node server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
     "dotenv": "^16.4.5",
+    "express": "^5.2.1",
     "pg": "^8.11.5"
   },
   "devDependencies": {

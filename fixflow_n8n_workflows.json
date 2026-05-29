@@ -1,0 +1,313 @@
+{
+  "name": "FixFlow Core — Automation Engine (WhatsApp, Alerts & Stock Logs)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "fixflow-db-event",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "node-1",
+      "name": "Postgres/Vercel Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [200, 400],
+      "notes": "Receives DB triggers and API events from your Vercel serverless backend."
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "{\"status\":\"ok\"}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "node-2",
+      "name": "Acknowledge Vercel (200 OK)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [440, 240]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {},
+                "conditions": [
+                  {
+                    "id": "event-intake",
+                    "leftValue": "={{ $json.body.event_type }}",
+                    "rightValue": "intake",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": false
+            },
+            {
+              "conditions": {
+                "options": {},
+                "conditions": [
+                  {
+                    "id": "event-handover",
+                    "leftValue": "={{ $json.body.event_type }}",
+                    "rightValue": "handover",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": false
+            },
+            {
+              "conditions": {
+                "options": {},
+                "conditions": [
+                  {
+                    "id": "event-parts",
+                    "leftValue": "={{ $json.body.event_type }}",
+                    "rightValue": "parts_allocation",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": false
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "id": "node-3",
+      "name": "Route Event Type",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [440, 440],
+      "notes": "Routes events to standard paths: Intake Check-in, Desk Handover, or Parts stock allocation."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v19.0/{{ $json.body.phone_number_id }}/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{ $json.body.client_phone }}\",\n  \"type\": \"text\",\n  \"text\": {\n    \"body\": \"Good day! 👋 Your device *{{ $json.body.device_info }}* has been successfully checked in. \\n\\n📋 *Your Job ID is:* #{{ $json.body.job_id.substring(0, 8) }}\\n\\nOur engineers are already working on it. You can track your repair progress live here: https://fixflow-core.vercel.app/\\n\\nThank you for choosing FixFlow Tech Hub! 🇳🇬🔧\"\n  }\n}",
+        "options": {}
+      },
+      "id": "node-4",
+      "name": "WABA: Send Customer Welcome (₦)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [720, 200],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "whatsapp-bearer-token",
+          "name": "WhatsApp Bearer Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v19.0/{{ $json.body.phone_number_id }}/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{ $json.body.tech_phone }}\",\n  \"type\": \"text\",\n  \"text\": {\n    \"body\": \"🔔 *NEW REPAIR TASK ASSIGNED*\\n\\n• *Job ID:* #{{ $json.body.job_id.substring(0, 8) }}\\n• *Device:* {{ $json.body.device_info }}\\n• *Customer:* {{ $json.body.client_name }}\\n\\n🔧 Please fetch the device from the reception shelf and begin diagnostics.\"\n  }\n}",
+        "options": {}
+      },
+      "id": "node-5",
+      "name": "WABA: Alert Tech Desk",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [960, 200],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "whatsapp-bearer-token",
+          "name": "WhatsApp Bearer Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v19.0/{{ $json.body.phone_number_id }}/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{ $json.body.new_tech_phone }}\",\n  \"type\": \"text\",\n  \"text\": {\n    \"body\": \"🔀 *CUSTODY HANDOVER CONFIRMED*\\n\\n• *Job ID:* #{{ $json.body.job_id.substring(0, 8) }}\\n• *Device:* {{ $json.body.device_info }}\\n\\nThis device is now officially transferred to your desk for deep diagnostics and micro-soldering.\"\n  }\n}",
+        "options": {}
+      },
+      "id": "node-6",
+      "name": "WABA: Alert Handover Tech",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [720, 440],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "whatsapp-bearer-token",
+          "name": "WhatsApp Bearer Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {},
+          "conditions": [
+            {
+              "id": "is-retail",
+              "leftValue": "={{ $json.body.is_retail_purchase }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "node-7",
+      "name": "Is Retail Purchase?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [720, 680]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v19.0/{{ $json.body.phone_number_id }}/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{ $json.body.ceo_phone }}\",\n  \"type\": \"text\",\n  \"text\": {\n    \"body\": \"🛍️ *SPECIAL PART PROCURED (Job #{{ $json.body.job_id.substring(0,8) }})*\\n\\n• *Part:* {{ $json.body.part_name }}\\n• *Source:* {{ $json.body.retail_source }}\\n• *Cost:* ₦{{ $json.body.purchase_cost }}\\n\\n_Note: logged under manual retail ledger by secretary._\"\n  }\n}",
+        "options": {}
+      },
+      "id": "node-8",
+      "name": "CEO: Notify Special Retail Buy",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [960, 600],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "whatsapp-bearer-token",
+          "name": "WhatsApp Bearer Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {},
+          "conditions": [
+            {
+              "id": "stock-low",
+              "leftValue": "={{ $json.body.qty_in_stock }}",
+              "rightValue": "={{ $json.body.threshold_alert }}",
+              "operator": {
+                "type": "number",
+                "operation": "smallerOrEqual"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "node-9",
+      "name": "Is Stock Level Low?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [960, 760]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v19.0/{{ $json.body.phone_number_id }}/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{ $json.body.ceo_phone }}\",\n  \"type\": \"text\",\n  \"text\": {\n    \"body\": \"⚠️ *LOW STOCK ALERT, CHIEF!*\\n\\n• *Part Name:* {{ $json.body.part_name }}\\n• *Remaining Stock:* {{ $json.body.qty_in_stock }} left\\n• *Restock Limit:* {{ $json.body.threshold_alert }}\\n\\n*Recommended action: Please approve restock order.*\"\n  }\n}",
+        "options": {}
+      },
+      "id": "node-10",
+      "name": "CEO: Notify Low Stock",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1200, 760],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "whatsapp-bearer-token",
+          "name": "WhatsApp Bearer Token"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Postgres/Vercel Webhook Trigger": {
+      "main": [
+        [
+          { "node": "Acknowledge Vercel (200 OK)", "type": "main", "index": 0 },
+          { "node": "Route Event Type", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Route Event Type": {
+      "main": [
+        [{ "node": "WABA: Send Customer Welcome (₦)", "type": "main", "index": 0 }],
+        [{ "node": "WABA: Alert Handover Tech", "type": "main", "index": 0 }],
+        [{ "node": "Is Retail Purchase?", "type": "main", "index": 0 }]
+      ]
+    },
+    "WABA: Send Customer Welcome (₦)": {
+      "main": [
+        [{ "node": "WABA: Alert Tech Desk", "type": "main", "index": 0 }]
+      ]
+    },
+    "Is Retail Purchase?": {
+      "main": [
+        [{ "node": "CEO: Notify Special Retail Buy", "type": "main", "index": 0 }],
+        [{ "node": "Is Stock Level Low?", "type": "main", "index": 0 }]
+      ]
+    },
+    "Is Stock Level Low?": {
+      "main": [
+        [{ "node": "CEO: Notify Low Stock", "type": "main", "index": 0 }],
+        []
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "fixflow-alerts-engine-v1"
+  },
+  "tags": ["fixflow", "whatsapp", "ceo-alerts", "inventory", "nigerian-hub"]
+}

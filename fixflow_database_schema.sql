@@ -60,6 +60,10 @@ CREATE TABLE repairs (
     handover_logs TEXT NOT NULL DEFAULT '',
     status repair_status NOT NULL DEFAULT 'Intake',
     total_billing NUMERIC(12, 2) NOT NULL DEFAULT 0.00,
+    -- Array of service/diagnostic charges: [{amount, note, added_at}]
+    service_charges JSONB NOT NULL DEFAULT '[]',
+    -- Array of per-technician labor contributions: [{tech_id, tech_name, labor_charge, recorded_at}]
+    tech_earnings JSONB NOT NULL DEFAULT '[]',
     checked_in_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
     completed_at TIMESTAMP WITH TIME ZONE
 );
@@ -183,3 +187,10 @@ CREATE TRIGGER trig_repairs_handover_history
 BEFORE UPDATE OF current_tech_id ON repairs
 FOR EACH ROW
 EXECUTE FUNCTION func_log_handover_history();
+
+
+-- ==========================================
+-- 5. Migration Helpers (run if DB already exists)
+-- ==========================================
+-- ALTER TABLE repairs ADD COLUMN IF NOT EXISTS service_charges JSONB NOT NULL DEFAULT '[]';
+-- ALTER TABLE repairs ADD COLUMN IF NOT EXISTS tech_earnings JSONB NOT NULL DEFAULT '[]';
